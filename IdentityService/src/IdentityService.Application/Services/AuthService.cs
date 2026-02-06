@@ -180,6 +180,56 @@ public class AuthService : IAuthService
         };
     }
 
+    public async Task<UserDto> UpdateUserAsync(Guid id, UpdateUserRequestDto request)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
+        {
+            throw new InvalidOperationException("User not found");
+        }
+
+        if (request.Email != null)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email))
+            {
+                throw new InvalidOperationException("Email cannot be empty");
+            }
+
+            var normalizedEmail = request.Email.Trim();
+            var existingUser = await _userRepository.GetByEmailAsync(normalizedEmail);
+            if (existingUser != null && existingUser.Id != user.Id)
+            {
+                throw new InvalidOperationException("Email already exists");
+            }
+
+            user.Email = normalizedEmail;
+        }
+
+        // Update fields if provided
+        if (!string.IsNullOrEmpty(request.FullName))
+        {
+            user.FullName = request.FullName;
+        }
+
+        if (!string.IsNullOrEmpty(request.Phone))
+        {
+            user.Phone = request.Phone;
+        }
+
+        if (request.Password != null)
+        {
+            if (string.IsNullOrWhiteSpace(request.Password))
+            {
+                throw new InvalidOperationException("Password cannot be empty");
+            }
+
+            user.PasswordHash = _passwordHasher.HashPassword(request.Password);
+        }
+
+        await _userRepository.UpdateAsync(user);
+        return MapToUserDto(user);
+    }
+
     private UserDto MapToUserDto(User user)
     {
         return new UserDto
