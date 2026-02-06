@@ -180,6 +180,40 @@ public class AuthService : IAuthService
         };
     }
 
+    public async Task<UserDto> UpdateUserAsync(Guid id, UpdateUserRequestDto request)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
+        {
+            throw new InvalidOperationException("User not found");
+        }
+
+        // Update fields if provided
+        if (!string.IsNullOrEmpty(request.FullName))
+        {
+            user.FullName = request.FullName;
+        }
+
+        if (!string.IsNullOrEmpty(request.Phone))
+        {
+            user.Phone = request.Phone;
+        }
+
+        if (!string.IsNullOrEmpty(request.Status))
+        {
+            // Validate status values
+            var validStatuses = new[] { "ACTIVE", "INACTIVE", "SUSPENDED" };
+            if (!validStatuses.Contains(request.Status.ToUpper()))
+            {
+                throw new InvalidOperationException("Invalid status value. Valid values: ACTIVE, INACTIVE, SUSPENDED");
+            }
+            user.Status = request.Status.ToUpper();
+        }
+
+        await _userRepository.UpdateAsync(user);
+        return MapToUserDto(user);
+    }
+
     private UserDto MapToUserDto(User user)
     {
         return new UserDto
