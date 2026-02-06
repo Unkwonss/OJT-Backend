@@ -188,6 +188,23 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("User not found");
         }
 
+        if (request.Email != null)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email))
+            {
+                throw new InvalidOperationException("Email cannot be empty");
+            }
+
+            var normalizedEmail = request.Email.Trim();
+            var existingUser = await _userRepository.GetByEmailAsync(normalizedEmail);
+            if (existingUser != null && existingUser.Id != user.Id)
+            {
+                throw new InvalidOperationException("Email already exists");
+            }
+
+            user.Email = normalizedEmail;
+        }
+
         // Update fields if provided
         if (!string.IsNullOrEmpty(request.FullName))
         {
@@ -199,15 +216,14 @@ public class AuthService : IAuthService
             user.Phone = request.Phone;
         }
 
-        if (!string.IsNullOrEmpty(request.Status))
+        if (request.Password != null)
         {
-            // Validate status values
-            var validStatuses = new[] { "ACTIVE", "INACTIVE", "SUSPENDED" };
-            if (!validStatuses.Contains(request.Status.ToUpper()))
+            if (string.IsNullOrWhiteSpace(request.Password))
             {
-                throw new InvalidOperationException("Invalid status value. Valid values: ACTIVE, INACTIVE, SUSPENDED");
+                throw new InvalidOperationException("Password cannot be empty");
             }
-            user.Status = request.Status.ToUpper();
+
+            user.PasswordHash = _passwordHasher.HashPassword(request.Password);
         }
 
         await _userRepository.UpdateAsync(user);
