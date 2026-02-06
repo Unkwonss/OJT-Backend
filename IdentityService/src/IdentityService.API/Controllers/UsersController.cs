@@ -1,6 +1,7 @@
 using IdentityService.Application.DTOs;
 using IdentityService.Application.Interfaces;
 using IdentityService.Domain.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IdentityService.API.Controllers;
@@ -8,6 +9,7 @@ namespace IdentityService.API.Controllers;
 [ApiController]
 [Route("api/users")]
 [Tags("User Management")]
+[ Authorize]
 public class UsersController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
@@ -29,6 +31,7 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <returns>List of all users</returns>
     [HttpGet("list")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetUsers()
     {
         try
