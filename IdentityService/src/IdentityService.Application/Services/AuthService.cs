@@ -283,6 +283,24 @@ public class AuthService : IAuthService
         return userDtos;
     }
 
+    public async Task<UserDto> DeleteUserAsync(Guid id)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
+        {
+            _logger?.LogWarning("User with ID {UserId} not found for deletion", id);
+            throw new InvalidOperationException("User not found");
+        }
+
+        // Soft delete: chuyển status thành INACTIVE
+        user.Status = "INACTIVE";
+        await _userRepository.UpdateAsync(user);
+
+        _logger?.LogInformation("User with ID {UserId} has been set to INACTIVE", id);
+
+        return MapToUserDto(user);
+    }
+
     private async Task LogLoginAttemptAsync(Guid userId, string status, string? failureReason, string? ipAddress, string? userAgent)
     {
         try
