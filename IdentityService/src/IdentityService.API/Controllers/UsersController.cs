@@ -221,4 +221,46 @@ public class UsersController : ControllerBase
             });
         }
     }
+
+    /// <summary>
+    /// Delete user (Admin only) - Soft delete by setting status to INACTIVE
+    /// </summary>
+    /// <param name="id">User ID</param>
+    /// <returns>Deleted user details</returns>
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteUser(Guid id)
+    {
+        try
+        {
+            var deletedUser = await _authService.DeleteUserAsync(id);
+
+            _logger.LogInformation("User with ID {UserId} has been set to INACTIVE", id);
+
+            return Ok(new
+            {
+                success = true,
+                message = "User deleted successfully (status set to INACTIVE)",
+                data = deletedUser
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "User with ID {UserId} not found for deletion", id);
+            return NotFound(new
+            {
+                success = false,
+                message = ex.Message
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting user with ID {UserId}", id);
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Error deleting user: " + ex.Message
+            });
+        }
+    }
 }
