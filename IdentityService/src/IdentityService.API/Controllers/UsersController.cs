@@ -6,7 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace IdentityService.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/users")]
+[Tags("User Management")]
 public class UsersController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
@@ -24,12 +25,43 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get user details by ID
+    /// Get all users list (Admin only)
+    /// </summary>
+    /// <returns>List of all users</returns>
+    [HttpGet("list")]
+    public async Task<IActionResult> GetUsers()
+    {
+        try
+        {
+            var users = await _authService.GetAllUsersAsync();
+
+            _logger.LogInformation("Retrieved {Count} users", users.Count);
+
+            return Ok(new
+            {
+                success = true,
+                message = "Users retrieved successfully",
+                data = users
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving all users");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Error retrieving users: " + ex.Message
+            });
+        }
+    }
+
+    /// <summary>
+    /// Get specific user details by ID
     /// </summary>
     /// <param name="id">User ID</param>
     /// <returns>User details</returns>
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetUserById(Guid id)
+    [HttpGet("details/{id}")]
+    public async Task<IActionResult> GetUser(Guid id)
     {
         try
         {
@@ -77,12 +109,71 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
+    /// Create a new user (Admin only)
+    /// </summary>
+    /// <param name="request">User creation request</param>
+    /// <returns>Created user details</returns>
+    [HttpPost("create")]
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequestDto request)
+    {
+        try
+        {
+            if (request == null)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Request body cannot be empty"
+                });
+            }
+
+            var createdUser = await _authService.CreateUserAsync(request);
+
+            _logger.LogInformation("Created new user with ID {UserId}", createdUser.Id);
+
+            return CreatedAtAction(nameof(GetUser), new { id = createdUser.Id }, new
+            {
+                success = true,
+                message = "User created successfully",
+                data = createdUser
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Invalid input when creating user");
+            return BadRequest(new
+            {
+                success = false,
+                message = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation when creating user");
+            return BadRequest(new
+            {
+                success = false,
+                message = ex.Message
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating user");
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Error creating user: " + ex.Message
+            });
+        }
+    }
+
+    /// <summary>
     /// Update user details
     /// </summary>
     /// <param name="id">User ID</param>
     /// <param name="request">Update user request</param>
     /// <returns>Updated user details</returns>
-    [HttpPut("{id}")]
+    [HttpPut("update/{id}")]
     public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserRequestDto request)
     {
         try

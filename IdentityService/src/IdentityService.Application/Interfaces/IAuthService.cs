@@ -9,4 +9,6 @@ public interface IAuthService
     Task LogoutAsync(string refreshToken);
     Task<LoginResponseDto> RefreshTokenAsync(string refreshToken);
     Task<UserDto> UpdateUserAsync(Guid id, UpdateUserRequestDto request);
+    Task<UserDto> CreateUserAsync(CreateUserRequestDto request);
+    Task<List<UserDto>> GetAllUsersAsync();
 }
