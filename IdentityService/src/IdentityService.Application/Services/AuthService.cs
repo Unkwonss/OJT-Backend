@@ -186,13 +186,12 @@ public class AuthService : IAuthService
         }
         if (!string.IsNullOrEmpty(request.Status))
         {
-            // Validate status values
-            var validStatuses = new[] { "ACTIVE", "INACTIVE", "SUSPENDED" };
-            if (!validStatuses.Contains(request.Status.ToUpper()))
+            if (string.IsNullOrWhiteSpace(request.Password))
             {
-                throw new InvalidOperationException("Invalid status value. Valid values: ACTIVE, INACTIVE, SUSPENDED");
+                throw new InvalidOperationException("Password cannot be empty");
             }
-            user.Status = request.Status.ToUpper();
+
+            user.PasswordHash = _passwordHasher.HashPassword(request.Password);
         }
         await _userRepository.UpdateAsync(user);
         return MapToUserDto(user);
