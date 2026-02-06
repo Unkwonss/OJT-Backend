@@ -184,7 +184,7 @@ public class AuthService : IAuthService
         {
             user.Phone = request.Phone;
         }
-        if (!string.IsNullOrEmpty(request.Status))
+        if (!string.IsNullOrEmpty(request.Email))
         {
             if (string.IsNullOrWhiteSpace(request.Password))
             {
