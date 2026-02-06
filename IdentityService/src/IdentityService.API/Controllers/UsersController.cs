@@ -117,6 +117,7 @@ public class UsersController : ControllerBase
     /// <param name="request">User creation request</param>
     /// <returns>Created user details</returns>
     [HttpPost("create")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequestDto request)
     {
         try
